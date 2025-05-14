@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Улучшения</h2>
+    <div class="row">
+        {% for upgrade in upgrades %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ upgrade.name }}</h5>
+                    <p class="card-text">{{ upgrade.description }}</p>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Уровень: {{ upgrade.level }}/{{ upgrade.max_level }}
+                        </small>
+                    </p>
+                    <p class="card-text">
+                        <strong>Стоимость:</strong> {{ upgrade.cost }} монет
+                    </p>
+                    <button class="btn btn-primary purchase-upgrade" 
+                            data-upgrade-id="{{ upgrade.id }}"
+                            {% if upgrade.level >= upgrade.max_level %}disabled{% endif %}>
+                        {% if upgrade.level >= upgrade.max_level %}
+                            Максимальный уровень
+                        {% else %}
+                            Купить улучшение
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const purchaseButtons = document.querySelectorAll('.purchase-upgrade');
+    
+    purchaseButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            const upgradeId = this.dataset.upgradeId;
+            try {
+                const response = await fetch(`/purchase_upgrade/${upgradeId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Произошла ошибка при покупке улучшения');
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

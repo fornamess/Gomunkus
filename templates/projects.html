@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section text-center mb-5">
+    <h1 class="display-4 mb-3">Проекты помощи</h1>
+    <p class="lead">Выберите проект, которому хотите помочь</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3 class="card-title mb-4">
+                    <i class="fas fa-project-diagram me-2"></i>
+                    Активные проекты
+                </h3>
+                <div class="row">
+                    {% for project in active_projects %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card project-card h-100">
+                            <img src="{{ project.image_url }}" class="card-img-top" alt="{{ project.name }}">
+                            <div class="project-details">
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-map-marker-alt"></i> {{ project.country }}
+                                </span>
+                                <span class="badge bg-info">
+                                    <i class="fas fa-tag"></i> {{ project.category }}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">{{ project.name }}</h5>
+                                <p class="card-text">{{ project.description }}</p>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ (project.current_amount / project.target_amount * 100)|round }}%">
+                                        {{ (project.current_amount / project.target_amount * 100)|round }}%
+                                    </div>
+                                </div>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        Собрано: {{ "%.2f"|format(project.current_amount) }} / {{ "%.2f"|format(project.target_amount) }}
+                                    </small>
+                                </p>
+                                <div class="input-group mb-3">
+                                    <input type="number" class="form-control donation-amount" 
+                                           placeholder="Сумма" min="0.01" step="0.01" 
+                                           data-project-id="{{ project.id }}">
+                                    <button class="btn btn-primary help-project" 
+                                            data-project-id="{{ project.id }}">
+                                        Помочь
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-4">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Завершенные проекты
+                </h3>
+                <div class="completed-projects">
+                    {% for project in completed_projects %}
+                    <div class="completed-project mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ project.name }}</h5>
+                                <p class="mb-0 text-muted">
+                                    <small>
+                                        <i class="fas fa-map-marker-alt"></i> {{ project.country }} |
+                                        <i class="fas fa-tag"></i> {{ project.category }}
+                                    </small>
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-success">
+                                    <i class="fas fa-check-circle"></i> Завершен
+                                </div>
+                                <small class="text-muted">
+                                    {{ project.completed_at.strftime('%d.%m.%Y') }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">Ваша статистика</h3>
+                <div class="stat-item mb-3">
+                    <h5>Баланс</h5>
+                    <div class="stat-value" id="stat-balance">{{ current_user.balance|round(2) }}</div>
+                </div>
+                <div class="stat-item mb-3">
+                    <h5>Всего помощи</h5>
+                    <div class="stat-value" id="stat-total-help">{{ current_user.total_help|round(2) }}</div>
+                </div>
+                <div class="stat-item">
+                    <h5>Завершенных проектов</h5>
+                    <div class="stat-value" id="stat-projects">{{ current_user.completed_projects }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const helpButtons = document.querySelectorAll('.help-project');
+    
+    helpButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const projectId = this.dataset.projectId;
+            const amountInput = document.querySelector(`.donation-amount[data-project-id="${projectId}"]`);
+            const amount = parseFloat(amountInput.value);
+            
+            if (!amount || amount <= 0) {
+                alert('Пожалуйста, введите корректную сумму');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('amount', amount);
+            
+            fetch(`/help_project/${projectId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Обновляем статистику
+                    document.getElementById('stat-balance').textContent = data.user_balance.toFixed(2);
+                    document.getElementById('stat-total-help').textContent = data.total_help.toFixed(2);
+                    
+                    // Обновляем прогресс проекта
+                    const progressBar = document.querySelector(`[data-project-id="${projectId}"]`)
+                        .closest('.card')
+                        .querySelector('.progress-bar');
+                    progressBar.style.width = data.project_progress + '%';
+                    progressBar.textContent = Math.round(data.project_progress) + '%';
+                    
+                    // Очищаем поле ввода
+                    amountInput.value = '';
+                } else {
+                    alert(data.message || 'Произошла ошибка');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Произошла ошибка при отправке запроса');
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 

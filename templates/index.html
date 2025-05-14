@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section text-center mb-5">
+    <h1 class="display-4 mb-3">Помогите развивающимся странам!</h1>
+    <p class="lead">Каждый тап приближает нас к лучшему будущему</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="tap-area">
+                    <button id="tap-button" class="btn btn-primary btn-lg">
+                        <i class="fas fa-hands-helping"></i>
+                        <span class="d-block mt-2">Тапни чтобы помочь</span>
+                    </button>
+                </div>
+                <div class="progress mb-3">
+                    <div id="experience-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <p id="level-info" class="text-muted">Уровень: 1 | Опыт: 0/100</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-4">
+                    <i class="fas fa-project-diagram me-2"></i>
+                    Активные проекты
+                </h3>
+                <div class="row">
+                    {% for project in projects %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card project-card h-100">
+                            <img src="{{ url_for('static', filename='images/' + project.image) }}" class="card-img-top" alt="{{ project.title }}">
+                            <div class="project-details">
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-map-marker-alt"></i> {{ project.country }}
+                                </span>
+                                <span class="badge bg-info">
+                                    <i class="fas fa-tag"></i> {{ project.category }}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">{{ project.title }}</h5>
+                                <p class="card-text">{{ project.description }}</p>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ (project.current_amount / project.target_amount * 100)|round }}%">
+                                        {{ (project.current_amount / project.target_amount * 100)|round }}%
+                                    </div>
+                                </div>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        Собрано: {{ "%.2f"|format(project.current_amount) }} / {{ "%.2f"|format(project.target_amount) }}
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3 class="card-title mb-4">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Ваша статистика
+                </h3>
+                <div class="stat-item mb-3">
+                    <h5>Баланс</h5>
+                    <div class="stat-value" id="stat-balance">0.00</div>
+                    <small class="text-muted">Доступно для помощи</small>
+                </div>
+                <div class="stat-item mb-3">
+                    <h5>Уровень</h5>
+                    <div class="d-flex align-items-center">
+                        <span class="stat-value" id="stat-level">1</span>
+                        <div class="progress flex-grow-1 ms-2">
+                            <div id="stat-experience-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <small class="text-muted" id="stat-experience">Опыт: 0/100</small>
+                </div>
+                <div class="stat-item mb-3">
+                    <h5>Всего помощи</h5>
+                    <div class="stat-value" id="stat-total-help">0.00</div>
+                    <small class="text-muted">Общая сумма помощи</small>
+                </div>
+                <div class="stat-item">
+                    <h5>Завершенных проектов</h5>
+                    <div class="stat-value" id="stat-projects">0</div>
+                    <small class="text-muted">Успешно реализовано</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-4">
+                    <i class="fas fa-trophy me-2"></i>
+                    Достижения
+                </h3>
+                <div class="achievements">
+                    <div class="achievement mb-2">
+                        <i class="fas fa-medal"></i>
+                        <span>Первый уровень</span>
+                    </div>
+                    <div class="achievement mb-2">
+                        <i class="fas fa-medal"></i>
+                        <span>Помощь в первом проекте</span>
+                    </div>
+                    <div class="achievement mb-2">
+                        <i class="fas fa-medal"></i>
+                        <span>100 тапов</span>
+                    </div>
+                    <div class="achievement mb-2">
+                        <i class="fas fa-medal"></i>
+                        <span>1000 единиц помощи</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tapButton = document.getElementById('tap-button');
+    let isTapping = false;
+    
+    // Обработчик для десктопа и мобильных устройств
+    tapButton.addEventListener('click', handleTap);
+    tapButton.addEventListener('touchend', handleTap);
+    
+    function handleTap(e) {
+        e.preventDefault();
+        
+        if (isTapping) return;
+        
+        isTapping = true;
+        tapButton.style.opacity = '0.7';
+        
+        fetch('/tap', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateUserStats(data);
+                showRewardAnimation(data.reward);
+            }
+            setTimeout(resetButton, 1000);
+        })
+        .catch(() => {
+            resetButton();
+        });
+    }
+    
+    function resetButton() {
+        isTapping = false;
+        tapButton.style.opacity = '1';
+    }
+    
+    function showRewardAnimation(reward) {
+        const animation = document.createElement('div');
+        animation.className = 'reward-animation';
+        animation.textContent = '+' + reward.toFixed(2);
+        document.querySelector('.tap-area').appendChild(animation);
+        
+        setTimeout(() => {
+            animation.remove();
+        }, 1000);
+    }
+    
+    function updateUserStats(stats) {
+        document.querySelector('.balance').innerHTML = `<i class="fas fa-coins"></i> ${stats.balance.toFixed(2)}`;
+        document.getElementById('level-info').textContent = `Уровень: ${stats.level} | Опыт: ${stats.experience}/${stats.next_level}`;
+        document.getElementById('stat-level').textContent = stats.level;
+        document.getElementById('stat-experience').textContent = `Опыт: ${stats.experience}/${stats.next_level}`;
+        
+        let progress = (stats.experience / stats.next_level) * 100;
+        document.getElementById('experience-bar').style.width = progress + '%';
+        document.getElementById('stat-experience-bar').style.width = progress + '%';
+        
+        document.getElementById('stat-balance').textContent = stats.balance.toFixed(2);
+        document.getElementById('stat-total-help').textContent = stats.total_help.toFixed(2);
+        document.getElementById('stat-projects').textContent = stats.completed_projects;
+    }
+    
+    // Загружаем начальную статистику
+    fetch('/user_stats')
+        .then(response => response.json())
+        .then(stats => {
+            updateUserStats(stats);
+        });
+});
+
+// AFK заработок
+async function checkAFKEarnings() {
+    try {
+        const response = await fetch('/afk_earnings');
+        const data = await response.json();
+        
+        if (data.success) {
+            document.querySelector('.balance').innerHTML = `<i class="fas fa-coins"></i> ${data.new_balance.toFixed(2)}`;
+        }
+    } catch (error) {
+        console.error('Ошибка при проверке AFK заработка:', error);
+    }
+}
+
+// Проверяем AFK заработок каждые 5 минут
+setInterval(checkAFKEarnings, 300000);
+
+// Проверяем AFK заработок при загрузке страницы
+document.addEventListener('DOMContentLoaded', checkAFKEarnings);
+</script>
+
+<style>
+.reward-animation {
+    position: absolute;
+    color: #28a745;
+    font-weight: bold;
+    animation: float-up 1s ease-out;
+    pointer-events: none;
+}
+
+@keyframes float-up {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+}
+</style>
+{% endblock %} 

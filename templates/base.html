@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Благотворительная ферма</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .navbar {
+            background-color: #2d2d2d !important;
+            border-bottom: 1px solid #404040;
+        }
+        .navbar-brand, .nav-link {
+            color: #ffffff !important;
+        }
+        .nav-link:hover {
+            color: #007bff !important;
+        }
+        .nav-link.active {
+            color: #007bff !important;
+            font-weight: 600;
+        }
+        .card {
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+        }
+        .card-body {
+            color: #ffffff;
+        }
+        .balance {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .reward-animation {
+            position: absolute;
+            color: #28a745;
+            font-weight: bold;
+            animation: float-up 1s ease-out;
+        }
+        @keyframes float-up {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+        .tap-area {
+            position: relative;
+            min-height: 150px;
+        }
+        .project-card {
+            transition: transform 0.2s;
+            background-color: #2d2d2d;
+        }
+        .project-card:hover {
+            transform: translateY(-5px);
+        }
+        .project-details {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .achievement {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #363636;
+            border-radius: 5px;
+        }
+        .achievement i {
+            color: #ffc107;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .btn-outline-primary {
+            color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-outline-primary:hover {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+        .progress {
+            background-color: #404040;
+        }
+        .progress-bar {
+            background-color: #007bff;
+        }
+        .dropdown-menu {
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+        }
+        .dropdown-item {
+            color: #ffffff;
+        }
+        .dropdown-item:hover {
+            background-color: #404040;
+            color: #ffffff;
+        }
+        .dropdown-divider {
+            border-top-color: #404040;
+        }
+        .alert {
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+            color: #ffffff;
+        }
+        .alert-success {
+            background-color: #1e3a1e;
+            border-color: #28a745;
+        }
+        .alert-danger {
+            background-color: #3a1e1e;
+            border-color: #dc3545;
+        }
+        .text-muted {
+            color: #a0a0a0 !important;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-hands-helping"></i> Благотворительная ферма
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                            <i class="fas fa-home"></i> Главная
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'projects' %}active{% endif %}" href="{{ url_for('projects') }}">
+                            <i class="fas fa-project-diagram"></i> Проекты
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'upgrades' %}active{% endif %}" href="{{ url_for('upgrades') }}">
+                            <i class="fas fa-arrow-up"></i> Улучшения
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    {% if current_user.is_authenticated %}
+                        <span class="balance me-3">
+                            <i class="fas fa-coins"></i> {{ current_user.balance|round(2) }}
+                        </span>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown">
+                                <i class="fas fa-user"></i> {{ current_user.username }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                        <i class="fas fa-user-circle"></i> Профиль
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                        <i class="fas fa-sign-out-alt"></i> Выйти
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-primary me-2">Войти</a>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary">Регистрация</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

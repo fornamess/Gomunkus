@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-user-plus fa-3x text-primary"></i>
+                </div>
+                <h2 class="card-title mb-4">Регистрация</h2>
+                
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-danger">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" action="{{ url_for('register') }}" id="register-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" class="form-control" name="username" placeholder="Имя пользователя" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" class="form-control" name="password" placeholder="Пароль" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" class="form-control" name="confirm_password" placeholder="Подтвердите пароль" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                        Зарегистрироваться
+                    </button>
+                    <p class="text-muted">
+                        Уже есть аккаунт? 
+                        <a href="{{ url_for('login') }}" class="text-primary">Войти</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#register-form').submit(function(e) {
+        const password = $('input[name="password"]').val();
+        const confirmPassword = $('input[name="confirm_password"]').val();
+        
+        if (password !== confirmPassword) {
+            e.preventDefault();
+            alert('Пароли не совпадают!');
+        }
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section text-center mb-5">
+    <h1 class="display-4 mb-3">Ваш профиль</h1>
+    <p class="lead">Управляйте своей помощью и следите за достижениями</p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="avatar mb-3">
+                    <i class="fas fa-user-circle fa-5x"></i>
+                </div>
+                <h3 class="card-title">{{ user.username }}</h3>
+                <p class="text-muted">
+                    <i class="fas fa-calendar-alt"></i>
+                    Присоединился {{ user.created_at.strftime('%d.%m.%Y') }}
+                </p>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3 class="card-title mb-4">
+                    <i class="fas fa-trophy me-2"></i>
+                    Достижения
+                </h3>
+                <div class="achievements">
+                    {% if user.level >= 1 %}
+                    <div class="achievement mb-2">
+                        <i class="fas fa-medal text-warning"></i>
+                        <span>Первый уровень</span>
+                    </div>
+                    {% endif %}
+                    {% if user.total_help >= 100 %}
+                    <div class="achievement mb-2">
+                        <i class="fas fa-medal text-warning"></i>
+                        <span>100 единиц помощи</span>
+                    </div>
+                    {% endif %}
+                    {% if user.completed_projects >= 1 %}
+                    <div class="achievement mb-2">
+                        <i class="fas fa-medal text-warning"></i>
+                        <span>Первый завершенный проект</span>
+                    </div>
+                    {% endif %}
+                    {% if user.experience >= 1000 %}
+                    <div class="achievement mb-2">
+                        <i class="fas fa-medal text-warning"></i>
+                        <span>1000 опыта</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3 class="card-title mb-4">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Статистика
+                </h3>
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="stat-item">
+                            <h5>Уровень</h5>
+                            <div class="d-flex align-items-center">
+                                <span class="stat-value">{{ user.level }}</span>
+                                <div class="progress flex-grow-1 ms-2">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ (user.experience % 100) }}%">
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="text-muted">Опыт: {{ user.experience }}/{{ (user.level + 1) * 100 }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="stat-item">
+                            <h5>Баланс</h5>
+                            <div class="stat-value">{{ "%.2f"|format(user.balance) }}</div>
+                            <small class="text-muted">Доступно для помощи</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="stat-item">
+                            <h5>Всего помощи</h5>
+                            <div class="stat-value">{{ "%.2f"|format(user.total_help) }}</div>
+                            <small class="text-muted">Общая сумма помощи</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="stat-item">
+                            <h5>Завершенных проектов</h5>
+                            <div class="stat-value">{{ user.completed_projects }}</div>
+                            <small class="text-muted">Успешно реализовано</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-4">
+                    <i class="fas fa-history me-2"></i>
+                    История помощи
+                </h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Проект</th>
+                                <th>Сумма</th>
+                                <th>Дата</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for donation in user.donations %}
+                            <tr>
+                                <td>{{ donation.project.name }}</td>
+                                <td>{{ "%.2f"|format(donation.amount) }}</td>
+                                <td>{{ donation.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Анимация прогресс-баров при загрузке страницы
+    $('.progress-bar').each(function() {
+        const width = $(this).css('width');
+        $(this).css('width', '0');
+        setTimeout(() => {
+            $(this).css('width', width);
+        }, 100);
+    });
+});
+</script>
+{% endblock %} 
